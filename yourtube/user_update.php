@@ -4,6 +4,10 @@ include "util.php";
 
 $conn = dbconnect($host, $dbid, $dbpass, $dbname);
 
+mysqli_query($conn, "set autocommit = 0");							// autocommit 해제
+mysqli_query($conn, "set transation isolation level serializable");	// isolation level 설정
+mysqli_query($conn, "begin");										// begins a transation
+
 $point = 0;
 $query = "select * from user natural join video";
 $res = mysqli_query($conn, $query);
@@ -14,7 +18,16 @@ while($row){
 	$temp = mysqli_fetch_array($res);
 	if($row['user_id'] != $temp['user_id']){
 		$query = "update user set user_point = $point where user_id = '$user_id'";
-		mysqli_query($conn, $query);
+		
+		$ret = mysqli_query($conn, $query);
+		if(!$ret){
+			mysqli_query($conn, "rollback");						//rollback
+			alert_message("Query Error : " .mysqli_error($conn));
+		}
+		else{
+			mysqli_query($conn, "commit");							//commit
+		}
+		
 		$point = 0;
 	}
 	$row = $temp;
@@ -33,7 +46,15 @@ while($user_row){
 			$user_id = $user_row['user_id'];
 			$class = $rank_row['class'];
 			$query = "update user set class = '$class' where user_id = '$user_id'";
-			mysqli_query($conn, $query);
+			
+			$ret = mysqli_query($conn, $query);
+			if(!$ret){
+				mysqli_query($conn, "rollback");					//rollback
+				alert_message("Query Error : " .mysqli_error($conn));
+			}
+			else{
+				mysqli_query($conn, "commit");						//commit
+			}
 		}
 		$rank_row = mysqli_fetch_array($rank);
 	}

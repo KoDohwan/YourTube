@@ -14,14 +14,20 @@ if (!$check['user_id']) {
 	msg("기존 회원ID와 다릅니다");
 }
 
+mysqli_query($conn, "set autocommit = 0");							// autocommit 해제
+mysqli_query($conn, "set transation isolation level serializable");	// isolation level 설정
+mysqli_query($conn, "begin");										// begins a transation
+
 $ret = mysqli_query($conn, "update user set user_name = '$user_name', user_nickname = '$user_nickname' where user_id = '$user_id'");
 
 if(!$ret)
 {
+	mysqli_error($conn, "rollback");								//rollback
     msg('Query Error : '.mysqli_error($conn));
 }
 else
 {
+	mysqli_query($conn, "commit");									//commit
     s_msg ('성공적으로 수정 되었습니다');
     echo "<meta http-equiv='refresh' content='0;url=user_list.php'>";
 }
